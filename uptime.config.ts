@@ -44,11 +44,9 @@ const workerConfig: WorkerConfig = {
     gracePeriod: 2,
     skipNotificationIds: [],
   },
-  
-  const GOOGLE_SHEETS_WEBHOOK = "https://script.google.com/macros/s/AKfycby9ZfqqZieLcK8I26cUBrDrDTofQezAoJisP3rw6sZljTPy2IrqGHgEUfIkrAvganNw/exec";
   callbacks: {
     onIncident: async (env, monitor, timeIncidentStart, timeNow, reason) => {
-      await fetch(GOOGLE_SHEETS_WEBHOOK, {
+      await fetch("https://script.google.com/macros/s/AKfycby9ZfqqZieLcK8I26cUBrDrDTofQezAoJisP3rw6sZljTPy2IrqGHgEUfIkrAvganNw/exec", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -65,7 +63,7 @@ const workerConfig: WorkerConfig = {
     },
   
     onStatusChange: async (env, monitor, isUp, timeIncidentStart, timeNow, reason) => {
-      await fetch(GOOGLE_SHEETS_WEBHOOK, {
+      await fetch("https://script.google.com/macros/s/AKfycby9ZfqqZieLcK8I26cUBrDrDTofQezAoJisP3rw6sZljTPy2IrqGHgEUfIkrAvganNw/exec", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
