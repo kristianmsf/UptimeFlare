@@ -19,7 +19,7 @@ const workerConfig: WorkerConfig = {
       name: 'KMSF Host',
       method: 'GET',
       target: 'https://kmsfhost.com',
-      expectedCodes: [200, 403],
+      expectedCodes: [418],
       timeout: 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36',
