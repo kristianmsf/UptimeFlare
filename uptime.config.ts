@@ -15,7 +15,7 @@ const workerConfig: WorkerConfig = {
   kvWriteCooldownMinutes: 3,
   monitors: [
     {
-      id: 'kmsfhost',
+      id: 'kmsf-host',
       name: 'KMSF Host',
       method: 'GET',
       target: 'https://kmsfhost.com',
@@ -27,7 +27,7 @@ const workerConfig: WorkerConfig = {
       },
     },
     {
-      id: 'kristianmsf',
+      id: 'kristian-msf',
       name: 'Kristian MSF',
       method: 'GET',
       target: 'https://kristianmsf.com',
