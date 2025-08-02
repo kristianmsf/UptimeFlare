@@ -1,3 +1,9 @@
-name = "uptimeflare_worker"
-main = "src/index.ts"
-compatibility_date = "2025-04-02"
+name = "uptimeflare"
+type = "javascript"
+
+account_id = "8463838a66bfcbbc0397ce8e121111a6"
+workers_dev = true
+compatibility_date = "2023-11-20"
+
+[env.production]
+name = "uptimeflare"
