@@ -4,10 +4,9 @@ const pageConfig: PageConfig = {
   title: "Kristian's Status Page",
   links: [
     { link: 'https://github.com/kristianmsf', label: 'GitHub' },
-    { link: 'mailto:kristian@kmsfhost.com', label: 'Contato', highlight: true },
   ],
   group: {
-    '🌐 Sites públicos': ['kmsfhost', 'kristianmsf'],
+    '🌐 Sites públicos': ['kmsf-host', 'kristian-msf'],
   },
 }
 
