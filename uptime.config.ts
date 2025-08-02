@@ -46,7 +46,7 @@ const workerConfig: WorkerConfig = {
   },
   callbacks: {
     onIncident: async (env, monitor, timeIncidentStart, timeNow, reason) => {
-      await fetch("https://script.google.com/macros/s/AKfycbxFJ0o3_oXSAWW3_EepA6OeDUfdqWOpVa6yBjfuajNqaMMNYKluoR-rmQWq6T0y2N9G/exec", {
+      await fetch("https://script.google.com/macros/s/1CEhwnR-BeFJrl87yTjaosLCAY1CJbITwoi1PDLmEwbHqvzEQwa1YOn_Z/exec", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -61,7 +61,7 @@ const workerConfig: WorkerConfig = {
       });
     },
     onStatusChange: async (env, monitor, isUp, timeIncidentStart, timeNow, reason) => {
-      await fetch("https://script.google.com/macros/s/AKfycbxFJ0o3_oXSAWW3_EepA6OeDUfdqWOpVa6yBjfuajNqaMMNYKluoR-rmQWq6T0y2N9G/exec", {
+      await fetch("https://script.google.com/macros/s/1CEhwnR-BeFJrl87yTjaosLCAY1CJbITwoi1PDLmEwbHqvzEQwa1YOn_Z/exec", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
