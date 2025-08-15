@@ -6,7 +6,7 @@ const pageConfig: PageConfig = {
     { link: 'https://github.com/kristianmsf', label: 'GitHub' },
   ],
   group: {
-    '🌐 Sites públicos': ['kmsf-host', 'kristian-msf', 'Pi'],
+    '🌐 Sites públicos': ['kmsf-host', 'kristian-msf', 'kmsf-pi'],
   },
 }
 
@@ -38,8 +38,8 @@ const workerConfig: WorkerConfig = {
       },
     },
     {
-      id: 'pi',
-      name: 'Pi',
+      id: 'kmsf-pi',
+      name: 'KMSF Pi',
       method: 'GET',
       target: 'https://pi.kmsfhost.com',
       expectedCodes: [200, 403],
