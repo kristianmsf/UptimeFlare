@@ -37,6 +37,18 @@ const workerConfig: WorkerConfig = {
         'Accept': 'text/html',
       },
     },
+    {
+      id: 'pi',
+      name: 'Pi',
+      method: 'GET',
+      target: 'https://pi.kmsfhost.com',
+      expectedCodes: [200, 403],
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36',
+        'Accept': 'text/html',
+      },
+    },
   ],
   notification: {
     timeZone: 'Asia/Tokyo',
