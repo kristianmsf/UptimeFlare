@@ -6,7 +6,7 @@ const pageConfig: PageConfig = {
     { link: 'https://github.com/kristianmsf', label: 'GitHub' },
   ],
   group: {
-    '🌐 Sites públicos': ['kmsf-host', 'kristian-msf'],
+    '🌐 Sites públicos': ['kmsf-host', 'kristian-msf', 'Pi'],
   },
 }
 
