@@ -6,7 +6,7 @@ const pageConfig: PageConfig = {
     { link: 'https://github.com/kristianmsf', label: 'GitHub' },
   ],
   group: {
-    '🌐 Sites públicos': ['kmsf-host', 'kristian-msf'],
+    '🌐 Sites públicos': ['kmsf-host', 'kristian-msf', 'py'],
   },
 }
 
@@ -30,6 +30,18 @@ const workerConfig: WorkerConfig = {
       name: 'Lifetime Hosting',
       method: 'GET',
       target: 'https://kristianmsf.com',
+      expectedCodes: [200, 403],
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36',
+        'Accept': 'text/html',
+      },
+    },
+    {
+      id: 'py',
+      name: 'Py',
+      method: 'GET',
+      target: 'https://py.kmsfhost.com',
       expectedCodes: [200, 403],
       timeout: 10000,
       headers: {
