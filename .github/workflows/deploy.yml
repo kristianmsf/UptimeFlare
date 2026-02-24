@@ -1,4 +1,4 @@
-name: Deploy UptimeFlare
+name: Deploy to Cloudflare
 
 on:
   push:
@@ -6,47 +6,88 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣ Checkout do repositório
       - uses: actions/checkout@v3
 
-      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 22
+          node-version: 22.x
           cache: 'npm'
 
-      # 3️⃣ Instalar dependências do projeto
       - name: Install dependencies
-        run: |
-          npm install
-          cd worker
-          npm install
+        run: npm install
 
-      # 4️⃣ Limpar builds antigos
-      - name: Clean old builds
-        run: |
-          rm -rf .vercel/output
-          rm -rf worker/dist
+      - name: Setup Wrangler
+        run: npm install -g wrangler@^4.68.0
 
-      # 5️⃣ Build do Worker
-      - name: Build Worker
+      # Fetch Cloudflare Account ID
+      - name: Fetch Account ID
+        id: fetch_account_id
         run: |
-          cd worker
-          npx wrangler deploy src/index.ts --outdir dist --dry-run
-
-      # 6️⃣ Build do Pages
-      - name: Build Pages
-        run: |
-          cd ..
-          npx @cloudflare/next-on-pages
-
-      # 7️⃣ Deploy Pages + Worker
-      - name: Deploy Pages
-        run: |
-          npx wrangler pages deploy .vercel/output/static --project-name uptimeflare
+          if [[ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]]; then
+            echo "Using provided CLOUDFLARE_ACCOUNT_ID from secrets."
+            echo "account_id=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+          else
+            ACCOUNT_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type:application/json" | jq -r ".result[0].id")
+            if [[ "$ACCOUNT_ID" == "null" ]]; then
+              echo "Failed to fetch Account ID. Check CLOUDFLARE_API_TOKEN."
+              exit 1
+            fi
+            echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+          fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Build Worker
+      - name: Build Worker
+        run: npx wrangler deploy worker/src/index.ts --outdir worker/dist --dry-run
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Build Pages
+      - name: Build Pages
+        run: |
+          npm install
+          npx @cloudflare/next-on-pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Initialize / Create D1 Database
+      - name: Create D1 database and tables
+        run: python3 deploy/init_d1.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
+
+      # Migrate state from KV (if needed)
+      - name: Migrate KV to D1
+        run: python3 deploy/migrate_kv.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
+          D1_ID: ${{ env.D1_ID }}
+
+      # Deploy resources with Terraform
+      - name: Deploy Terraform
+        run: |
+          terraform init
+          terraform import cloudflare_d1_database.uptimeflare_d1 "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/$D1_ID"
+          terraform import cloudflare_workers_script.uptimeflare_worker "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker" || echo "Worker import failed, continuing..."
+          terraform import cloudflare_pages_project.uptimeflare "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare" || echo "Pages import failed, continuing..."
+          terraform apply -auto-approve -input=false
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
+          D1_ID: ${{ env.D1_ID }}
+
+      # Deploy Pages to Cloudflare
+      - name: Upload Pages
+        run: npx wrangler pages deploy .vercel/output/static --project-name uptimeflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
