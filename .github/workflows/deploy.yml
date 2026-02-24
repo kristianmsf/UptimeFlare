@@ -11,99 +11,88 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # ✅ Setup Terraform (necessário)
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: 1.6.4
 
-      # ✅ Setup Node
       - name: Use Node.js 22.x
         uses: actions/setup-node@v3
         with:
           node-version: 22.x
           cache: 'npm'
 
-      # ✅ Fetch Account ID
+      # Automatically get an account id via the API Token
+      # if secrets.CLOUDFLARE_ACCOUNT_ID is not set.
       - name: Fetch Account ID
         id: fetch_account_id
         run: |
           if [[ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]]; then
             ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-            echo "Using provided CLOUDFLARE_ACCOUNT_ID."
+            echo "Using provided CLOUDFLARE_ACCOUNT_ID from secrets."
           else
-            ACCOUNT_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts" \
-              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              -H "Content-Type:application/json" | jq -r ".result[0].id")
-
+            ACCOUNT_ID=$(curl -X GET "https://api.cloudflare.com/client/v4/accounts" -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H "Content-Type:application/json" | jq ".result[0].id" -r)
             if [[ "$ACCOUNT_ID" == "null" ]]; then
-              echo "Failed to get Account ID."
+              echo "Failed to get an account id, please make sure you have set up CLOUDFLARE_API_TOKEN correctly!"
               exit 1
             fi
           fi
+          echo 'account_id='$ACCOUNT_ID >> $GITHUB_OUTPUT
 
-          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      # ✅ Install dependencies
       - name: Install packages
         run: |
           npm install
           cd worker
           npm install
 
-      # ✅ Build Worker (dry run only build check)
       - name: Build worker
         run: |
           cd worker
           npx wrangler deploy src/index.ts --outdir dist --dry-run
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      # ✅ Build Pages
       - name: Build page
         run: |
           npx @cloudflare/next-on-pages
 
-      # ✅ Create / ensure D1 exists
       - name: Create D1 database and tables
-        run: python3 deploy/init_d1.py
+        run: |
+          python3 deploy/init_d1.py  # This sets D1_ID in GITHUB_ENV
+
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
 
-      # ✅ Migrate KV if exists (safe if none exists)
-      - name: Migrate state from KV
-        run: python3 deploy/migrate_kv.py || echo "No KV to migrate"
+      - name: Migrate state from KV (if needed)
+        run: |
+          python3 deploy/migrate_kv.py
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
           D1_ID: ${{ env.D1_ID }}
 
-      # ✅ Terraform deploy
       - name: Deploy using Terraform
+        # As we don't save terraform state somewhere, we need to import the existing resources
         run: |
           terraform init
 
-          echo "Checking Durable Object namespace..."
-
-          DO_RESP=$(curl -s "https://api.cloudflare.com/client/v4/accounts/$TF_VAR_CLOUDFLARE_ACCOUNT_ID/workers/durable_objects/namespaces?per_page=1000" \
+          DO_RESP=$(curl "https://api.cloudflare.com/client/v4/accounts/$TF_VAR_CLOUDFLARE_ACCOUNT_ID/workers/durable_objects/namespaces?per_page=1000" \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
 
           if echo "$DO_RESP" | jq -e '.result[] | select(.script == "uptimeflare_worker" and .class == "RemoteChecker")' > /dev/null; then
-            echo "Durable Object namespace exists."
+            echo "Existing Durable Object namespace found for uptimeflare_worker RemoteChecker. No migration needed."
           else
-            echo "Durable Object namespace missing, enabling migration."
+            echo "No existing Durable Object namespace found for uptimeflare_worker RemoteChecker. Need migration."
             export TF_VAR_enable_do_migration=true
           fi
 
-          echo "Importing resources (safe if already imported)..."
-
-          terraform import cloudflare_d1_database.uptimeflare_d1 "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/$D1_ID" || true
-          terraform import cloudflare_workers_script.uptimeflare_worker "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker" || true
-          terraform import cloudflare_workers_cron_trigger.uptimeflare_worker_cron "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker" || true
-          terraform import cloudflare_pages_project.uptimeflare "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare" || true
+          echo "Try importing existing resources..."
+          terraform import cloudflare_d1_database.uptimeflare_d1 "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/$D1_ID"
+          terraform import cloudflare_workers_script.uptimeflare_worker "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker" || echo "WARNING: Worker script import failed, continuing..."
+          terraform import cloudflare_workers_cron_trigger.uptimeflare_worker_cron "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker" || echo "WARNING: Cron trigger import failed, continuing..."
+          terraform import cloudflare_pages_project.uptimeflare "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare" || echo "WARNING: Pages project import failed, continuing..."
 
           terraform apply -auto-approve -input=false
         env:
@@ -111,7 +100,7 @@ jobs:
           TF_VAR_CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
           D1_ID: ${{ env.D1_ID }}
 
-      # ✅ Upload Pages bundle
+      # Currently Terraform Cloudflare provider doesn't support direct upload, use wrangler to upload instead.
       - name: Upload pages
         run: |
           npx wrangler pages deploy .vercel/output/static --project-name uptimeflare
