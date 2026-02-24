@@ -13,6 +13,7 @@ const pageConfig: PageConfig = {
   },
 }
 
+
 const workerConfig: WorkerConfig = {
   kvWriteCooldownMinutes: 3,
 
