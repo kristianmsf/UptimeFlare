@@ -70,7 +70,7 @@ const workerConfig: WorkerConfig = {
           reason,
           timeNow,
           start: timeIncidentStart,
-          latency: monitor.lastResponseTime ?? null
+          latency: null
         })
       });
     },
@@ -86,7 +86,7 @@ const workerConfig: WorkerConfig = {
           reason,
           timeNow,
           start: timeIncidentStart,
-          latency: monitor.lastResponseTime ?? null
+          latency: null
         })
       });
     }
