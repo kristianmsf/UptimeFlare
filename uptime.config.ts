@@ -99,8 +99,8 @@ const workerConfig: WorkerConfig = {
 }
 
 async function sendTelegram(env, message) {
-  const token = env.8644281881:AAFgRhLkLbkXp9OAxVex-a98GSMFZBp4xxI
-  const chatId = env.549731136
+  const token = env.TELEGRAM_TOKEN
+  const chatId = env.TELEGRAM_CHAT_ID
 
   const url = `https://api.telegram.org/bot${token}/sendMessage`
 
