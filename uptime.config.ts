@@ -48,7 +48,7 @@ const workerConfig: WorkerConfig = {
       expectedCodes: [200, 403],
       timeout: 15000,
       headers: {
-        'User-Agent': 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
         'Accept': 'text/html',
       },
     },
