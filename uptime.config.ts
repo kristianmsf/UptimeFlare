@@ -90,7 +90,11 @@ const workerConfig: WorkerConfig = {
         
         Tempo offline: ${duration} minutos`
         
-        await sendTelegram(env, msg)
+        try {
+            await sendTelegram(env, msg)
+          } catch (err) {
+            console.error("Telegram error:", err)
+        }
       
       }
     
@@ -98,7 +102,8 @@ const workerConfig: WorkerConfig = {
   },
 }
 
-async function sendTelegram(env, message) {
+async function sendTelegram(env: any, message: string) {
+
   const token = env.TELEGRAM_TOKEN
   const chatId = env.TELEGRAM_CHAT_ID
 
