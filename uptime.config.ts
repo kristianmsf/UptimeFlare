@@ -91,7 +91,7 @@ const workerConfig: WorkerConfig = {
         Tempo offline: ${duration} minutos`
         
         try {
-            await sendTelegram(env, msg)
+            // await sendTelegram(env, msg)
           } catch (err) {
             console.error("Telegram error:", err)
         }
