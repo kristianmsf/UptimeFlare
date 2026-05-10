@@ -19,7 +19,7 @@ const workerConfig: WorkerConfig = {
       id: 'kmsf-host',
       name: 'Asura Hosting',
       method: 'GET',
-      target: 'https://kmsfhost.com',
+      target: 'https://painel.kmsfhost.com',
       expectedCodes: [200, 403, 500, 502, 503, 504],
       timeout: 20000,
       headers: {
