@@ -41,8 +41,8 @@ const workerConfig: WorkerConfig = {
       },
     },
     {
-      id: 'oracle-cloud',
-      name: 'Oracle Cloud',
+      id: 'oracle-kmsf',
+      name: 'Oracle kmsf',
       method: 'GET',
       target: 'https://oracle.kmsfhost.com',
       expectedCodes: [200, 403, 500, 502, 503, 504],
@@ -53,8 +53,8 @@ const workerConfig: WorkerConfig = {
       },
     },
     {
-      id: 'oracle-arm',
-      name: 'Oracle Arm',
+      id: 'oracle-kmsf-arm',
+      name: 'Oracle kmsf-arm',
       method: 'GET',
       target: 'https://host.kmsfhost.com',
       expectedCodes: [200, 403, 500, 502, 503, 504],
